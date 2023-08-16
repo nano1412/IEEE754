@@ -5,31 +5,42 @@ class Program
 {
   static void Main(string[] args)
   {
+    // initial
+    bool isValid = true;
+
     // input and calling function
     string input = Console.ReadLine();
-    Console.WriteLine(IEEE754(input));
+    input = formatting(input, ref isValid);
+
+    if (isValid)
+    {
+      Console.WriteLine(IEEE754(input));
+    }
+    else
+    {
+      Console.WriteLine("Invalid");
+    }
   }
-  static int IEEE754(string input)
+  static string IEEE754(string input)
   {
+    // sign
+    string sign = ("-".Contains(input[0])) ? "1" : "0";
+
     // split
     string[] num = input.Split('.');
-    int front_num = Math.Abs(int.Parse(num[0]));
-    int back_num = int.Parse(num[1]);
-
-    // sign
-    int sign = 0;
-    if (int.Parse(num[0]) <= 0) { sign = 1; }
+    int decimal_front_num = Math.Abs(int.Parse(num[0]));
+    int decimal_back_num = int.Parse(num[1]);
 
     // Mantissa and decimal Exponent
-    string binary_front_num = ToBinary(front_num, 23);
-    int decimal_exponent = binary_front_num.ToString().Length;
-    string binary_back_num = ToBinaryFraction(back_num, 24 - decimal_exponent);
+    string front_num = ToBinary(decimal_front_num, 23);
+    int decimal_exponent = front_num.ToString().Length;
+    string back_num = ToBinaryFraction(decimal_back_num, 24 - decimal_exponent);
 
     // Exponent
     string exponent = ToBinary(126 + decimal_exponent, 8);
 
     // combine and return
-    return Convert.ToInt32(sign + exponent + binary_front_num.Remove(0, 1) + binary_back_num);
+    return sign + exponent + front_num.Remove(0, 1) + back_num;
   }
 
   static string ToBinary(int num, int k)
@@ -48,28 +59,52 @@ class Program
   {
     int overdigit = Convert.ToInt32(Math.Pow(10, num.ToString().Length));
     string binary = "";
-    while (num > 0 && k > 0)
+    while (k > 0)
     {
-      num = num * 2;
-      int i = num / overdigit;
-      if (num > overdigit) { num = num - overdigit; }
-      binary = binary + i.ToString();
+      if (num > 0)
+      {
+        num = num * 2;
+        int i = num / overdigit;
+        if (num > overdigit) { num = num - overdigit; }
+        binary = binary + i.ToString();
+      }
+      else
+      {
+        binary = binary + 0;
+      }
       k--;
     }
     return binary;
   }
 
-  // check invalid input type (ถ้าที่ใส่มาเป็น)
-  static bool IsValid(string text)
+  // check invalid input type
+  static string formatting(string text, ref bool isValid)
   {
-    foreach (char digit in text)
+    int dotCount = 0;
+    if (!"-0123456789".Contains(text[0])) //ถ้าอยากให้ใส่เลขทศนิยมที่ไม่มีจำนวนเต็มนำหน้าได้ (เช่น ".33") ให้เติม "." ในฟันหนูด้วย
     {
-      if (!"-0123456789.".Contains(digit))
+      isValid = false;
+      return "0.0";
+    }
+    string temp_text = text.Remove(0, 1);
+
+    foreach (char digit in text.Remove(0, 1))
+    {
+      if (!"0123456789.".Contains(digit) || dotCount > 1)
       {
-        return false;
+        isValid = false;
+        return "0.0";
+      }
+
+      if (".".Contains(digit))
+      {
+        dotCount++;
       }
     }
-    return true;
-
+    if (dotCount == 0)
+    {
+      text = text + ".0";
+    }
+    return text;
   }
 }
